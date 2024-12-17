@@ -1,3 +1,23 @@
+function Upload(props) {
+  return React.createElement('div', {
+    ...props,
+    className: props.className
+  }, '📤'); // Simple placeholder
+}
+
+function Loader2(props) {
+  return React.createElement('div', {
+    ...props,
+    className: `${props.className} border-4 border-blue-500 border-t-transparent rounded-full`
+  });
+}
+
+function Send(props) {
+  return React.createElement('span', {
+    ...props
+  }, '🚀'); // Simple placeholder
+}
+
 function UploadChatInterface() {
   const [messages, setMessages] = React.useState([]);
   const [inputMessage, setInputMessage] = React.useState('');
@@ -66,7 +86,7 @@ function UploadChatInterface() {
         }, "Glissez vos fichiers ici ou"),
         React.createElement('button', {
           key: 'upload-button',
-          onClick: () => fileInputRef.current?.click(),
+          onClick: () => fileInputRef.current && fileInputRef.current.click(),
           className: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         }, "Sélectionnez des fichiers"),
         React.createElement('input', {
