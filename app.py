@@ -13,6 +13,22 @@ CORS(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+# main AutoGPT def
+def perform_task(task, context):
+    # Combine context and the task into a single prompt
+    prompt = (
+        f"You are AutoGPT, an AI assistant capable of breaking down complex goals into smaller tasks "
+        f"and autonomously solving them step-by-step. Here is the current task:\n\n{task}\n\n"
+        f"Context so far:\n{context}\n\n"
+        f"Please provide your next steps and their expected results."
+    )
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}]
+    )
+    return response.choices[0].message.content.strip()
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -38,24 +54,47 @@ def upload_file():
         })
 
 
+# route /chat
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
         data = request.json
-        message = data.get('message', '')
-        
-        # Intégration avec l'API OpenAI (AutoGPT)
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message}]
-        )
-        
+        user_message = data.get('message', '').strip()  # User's input message
+        context = data.get('context', [])  # Optional: contextual history
+        filename = data.get('filename', None)
+
+        if not user_message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+
+        # Process file if provided
+        file_content = ""
+        if filename:
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            if os.path.exists(filepath):
+                with open(filepath, 'r', encoding='utf-8') as file:
+                    file_content = file.read()
+            else:
+                return jsonify({'error': f'File "{filename}" not found'}), 400
+
+        # Combine file content with the task
+        goal = f"{user_message}\n\nThe file content is as follows:\n{file_content}" if file_content else user_message
+        subtask_history = []
+
+        # Initial task execution
+        task_result = perform_task(goal, context)
+        subtask_history.append(task_result)
+
+        # Return the task's result
         return jsonify({
-            'success': True,
-            'response': response.choices[0].message.content
+            "success": True,
+            "result": task_result,
+            "subtask_history": subtask_history
         })
+
+    except KeyError as e:
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
 @app.route('/uploads/<filename>')

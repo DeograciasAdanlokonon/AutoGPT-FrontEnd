@@ -86,7 +86,7 @@ votre_projet/
 5. **Configuration des permissions**
    ```bash
    chmod 755 ~/votre_projet
-   chmod 777 ~/votre_projet/uploads
+   chmod 777 ~/autogpt/uploads
    ```
 
 ## Vérification et débogage

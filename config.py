@@ -15,7 +15,6 @@ class Config:
     
     # Configuration OpenAI (AutoGPT)
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-    # OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     
     # Configuration de la base de données (si nécessaire)
     DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'

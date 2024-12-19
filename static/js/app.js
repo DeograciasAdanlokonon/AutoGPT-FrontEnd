@@ -25,10 +25,30 @@ function UploadChatInterface() {
   const [uploadedFiles, setUploadedFiles] = React.useState([]);
   const fileInputRef = React.useRef(null);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {handleSendMessage
     const files = Array.from(event.target.files);
-    setUploadedFiles(prev => [...prev, ...files]);
+    setUploadedFiles((prev) => [...prev, ...files]);
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append('file', file));
+
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            console.log('File uploaded:', result);
+        } else {
+            console.error('Upload failed:', result.error);
+        }
+    } catch (error) {
+        console.error('Error uploading file:', error);
+    }
   };
+
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -43,24 +63,22 @@ function UploadChatInterface() {
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
-    setMessages(prev => [...prev, {
-      text: inputMessage,
-      isUser: true,
-      timestamp: new Date().toLocaleTimeString()
-    }]);
+    const payload = {
+        message: inputMessage,
+        filename: uploadedFiles[0]?.name // Include the first uploaded file, if any
+    };
 
-    // Simuler une réponse de l'IA
-    setIsLoading(true);
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        text: "Ceci est une simulation de réponse AutoGPT...",
-        isUser: false,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
-      setIsLoading(false);
-    }, 1000);
-
-    setInputMessage('');
+    fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            setMessages(prev => [...prev, { text: data.result, isUser: false }]);
+        }
+    });
   };
 
   return React.createElement('div', {
